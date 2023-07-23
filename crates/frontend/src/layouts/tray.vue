@@ -8,7 +8,13 @@
         </div>
     </div>
 </template>
-
+<script setup lang="ts">
+import {nextTick} from 'vue'
+import { appWindow } from "@tauri-apps/plugin-window";
+nextTick(()=>{
+  appWindow.emit('ready')
+})
+</script>
 <style scoped>
 .background {
     width: 100%;

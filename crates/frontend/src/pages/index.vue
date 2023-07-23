@@ -20,9 +20,9 @@ const tasks = ref(<Task[]>[])
 
 for (let step = 0; step < 15; step++) {
     tasks.value.push({
-    title: 'Do something',
-    body: ['Paragraph 1.', 'Paragraph 2.']
-})
+        title: 'Do something',
+        body: ['Paragraph 1.', 'Paragraph 2.']
+    })
 }
 </script>
 

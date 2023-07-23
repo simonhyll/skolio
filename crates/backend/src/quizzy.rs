@@ -1,28 +1,42 @@
 use std::sync::{Arc, Mutex};
 
 use log::{info, trace};
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
-#[derive(Debug)]
-struct QuizzyTimerState {
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub(crate) struct QuizzyTimerState {
     counter: u64,
+    initial: u64,
     decrement: f64,
     increment: f64,
 }
 
-#[derive(Debug)]
-struct QuizzyState {
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub(crate) struct QuizzyState {
     timer: QuizzyTimerState,
 }
 
+impl Default for QuizzyState {
+    fn default() -> Self {
+        Self {
+            timer: QuizzyTimerState {
+                counter: 0,
+                initial: 60,
+                decrement: 0.9,
+                increment: 60.0,
+            },
+        }
+    }
+}
+
 pub(crate) async fn run(app: AppHandle) {
-    app.manage(Mutex::new(QuizzyState {
-        timer: QuizzyTimerState {
-            counter: 0,
-            decrement: 0.90,
-            increment: 60.0,
-        },
-    }));
+    // TODO: Make this persistent
+    let mut state = QuizzyState::default();
+    state.timer.counter += state.timer.initial;
+    app.manage(Mutex::new(state));
+    // TODO: Actually sleep for the correct amount
+    tokio::time::sleep(tokio::time::Duration::from_secs(state.timer.initial)).await;
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
     let s = Arc::new(Mutex::new(tx));
     loop {
@@ -72,7 +86,7 @@ pub(crate) async fn run(app: AppHandle) {
                 {
                     let state = handle.state::<Mutex<QuizzyState>>();
                     let mut lock = state.lock().unwrap();
-                    trace!("Decreasing to {}%", lock.timer.decrement);
+                    trace!("Multiplying by: {}", lock.timer.decrement);
                     lock.timer.counter = (lock.timer.counter as f64 * lock.timer.decrement) as u64;
                     trace!("Increasing by: {}", lock.timer.increment as u64);
                     lock.timer.counter += lock.timer.increment as u64;
